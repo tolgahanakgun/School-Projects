@@ -1,0 +1,645 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#define MAX_ISIM 21 //takim ve futbolcu isimleri icin max karakter sayisi
+/**<
+        Yapilan hata kontrolleri;
+            takim ismi bulunamadiginda hata verir
+            skorlar.txt de hatali kod girisi var ise hata verir
+            3. secenek de kod yanlis girilirse hata verir
+            deplasman da en cok gol atan takimi bulurken skorlar.txt de hatasi kod girisininde hata verir
+            skor bilgisi olmayan haftalar icin hata verir
+            skor gir fonksiyonunda skor girisi yapilirken takim icin hatali kod girisini tespit eder
+            oyuncu transferlerinde forma numaralari uzerinden su an ki takiminda olup olmadigi kontrol eder
+
+            */
+struct takim{
+	int kodu;
+	char adi[MAX_ISIM];
+	int galibiyet;
+	int beraberlik;
+	int maglubiyet;
+	int attigi_gol;
+	int yedigi_gol; };
+
+struct futbolcu{
+	int numara;
+	char adi[MAX_ISIM];
+	int attigi_gol; };
+
+struct puan_kod{
+	int kod;
+	int averaj;
+	int puan; };
+
+char *koddan_isime(int kod, FILE *ftakimlar);
+int puan_hesapla(struct takim bir_takim);
+int averaj_hesapla(struct takim bir_takim);
+int isimden_koda(char isim[MAX_ISIM], FILE *ftakimlar);
+int koddan_futbolcu_kontrol(int takim_kodu, int futbolcu_kodu, FILE *ffutbolcular);
+int koddan_takim_kontrolu(int kod, FILE *ftakimlar);
+void puan_cetveli(FILE *ftakimlar);
+void oyuncu_sil(FILE *ffutbolcular);
+void en_cok_goller(FILE *ftakimlar);
+void lig_ici_transfer (FILE *ffutbolcular);
+void lig_disi_transfer(FILE *ffutbolcular);
+void deplasman(FILE *ftakimlar, FILE *fskorlar);
+void mac_listele (FILE *ftakimlar, FILE *fskorlar);
+void takim_bilgilerini_yazdir(int kod, FILE *ftakimlar);
+void haftanin_skorlari(FILE *ftakimlar, FILE *fskorlar);
+void galibiyet_arttir(int takimin_kodu, FILE *ftakimlar);
+void beraberlik_arttir(int takimin_kodu, FILE *ftakimlar);
+void skorlartxt_guncelle(FILE *fskorlar, FILE *ftakimlar);
+void maglubiyet_arttir(int takimin_kodu, FILE *ftakimlar);
+void en_cok_gol_futbolcu(FILE *ftakimlar, FILE *ffutbolcular);
+void menu(FILE *ftakimlar, FILE *fskorlar, FILE *ffutbolcular);
+void skor_gir(FILE *ftakimlar, FILE *fskorlar, FILE *ffutbolcular);
+void durum_futbolcu_goruntule(FILE *ftakimlar, FILE *ffutbolcular);
+void puan_swap(struct puan_kod *puan1, struct puan_kod *puan2);
+void skorlartxt_kayit(int hafta_no, int ev_sahibi_takimin_kodu, int misafir_takimin_kodu, int ev_sahibi_takimin_attigi_gol, int misafir_takimin_attigi_gol, FILE *fskorlar);
+
+int main()
+{
+    FILE *ftakimlar, *ffutbolcular, *fskorlar;
+    fskorlar=fopen("skorlar.txt", "a+");
+    ftakimlar=fopen("takimlar.dat","rb+");
+    ffutbolcular=fopen("futbolcular.dat", "rb+");
+
+    if(fskorlar && ftakimlar && ffutbolcular)
+        menu(ftakimlar, fskorlar, ffutbolcular);
+    else
+        printf("'skorlar.txt', 'takimlar.dat' veya 'futbolcular.dat' dosyalarindan biri bulunamadi!");
+
+    fclose(fskorlar);
+    fclose(ffutbolcular);
+    fclose(ftakimlar);
+
+    return 0;
+}
+
+void menu(FILE *ftakimlar, FILE *fskorlar, FILE *ffutbolcular)  //ana menuyu goruntuler
+{
+    int secim=1;
+    while(secim<12 && secim>-1)
+    {
+        printf("\n\n\n---------------------------------MENU--------------------------------------------\n\n");
+        printf("     1. Biten mac skorlarinin girilmesi\n");
+        printf("     2. Bir takimin su anki durumunun ve futbolcularinin listelenmesi\n");
+        printf("     3. Bir takimin su anki durumunun ve oynadigi maclarin listelenmesi\n");
+        printf("     4. Puan cetvelinin listelenmesi\n");
+        printf("     5. En cok gol atan ve en cok gol yiyen takimlarin listelenmesi\n");
+        printf("     6. Deplasmanda en cok gol atan takimin listelenmesi\n");
+        printf("     7. Bir haftanin mac skorlarinin listelenmesi\n");
+        printf("     8. Ligde en cok gol atan futbolcunun listelenmesi\n");
+        printf("     9. Bir takima lig disindan yeni bir futbolcunun transfer edilmesi\n");
+        printf("     10. Bir takimdaki bir fulbolcunun ligdeki baska bir takima transfer edilmesi\n");
+        printf("     11. Bir takimdaki futbolcunun lig disindaki bir takima transfer edilmesi\n");
+        printf("     0. CIKIS\n");
+        printf("\nSECIMINIZ:");
+        scanf("%d", &secim);
+        switch(secim)
+        {
+            case 0: exit(0); break;
+            case 1: {system("cls"); skor_gir(ftakimlar, fskorlar, ffutbolcular);} break;
+            case 2: {system("cls"); durum_futbolcu_goruntule(ftakimlar, ffutbolcular);} break;
+            case 3: {system("cls"); mac_listele(ftakimlar, fskorlar);} break;
+            case 4: {system("cls"); puan_cetveli(ftakimlar);} break;
+            case 5: {system("cls"); en_cok_goller(ftakimlar);} break;
+            case 6: {system("cls"); deplasman(ftakimlar, fskorlar);} break;
+            case 7: {system("cls"); haftanin_skorlari(ftakimlar, fskorlar);} break;
+            case 8: {system("cls"); en_cok_gol_futbolcu(ftakimlar, ffutbolcular);} break;
+            case 9: {system("cls"); lig_disi_transfer(ffutbolcular);} break;
+            case 10: {system("cls"); lig_ici_transfer(ffutbolcular);} break;
+            case 11: {system("cls"); oyuncu_sil(ffutbolcular);} break;
+        }
+        while(!(secim<12 && secim>-1))
+        {
+            printf("Yanlis giris yaptiniz:");
+            scanf("%d", &secim);
+        }
+    }
+}
+
+void skor_gir(FILE *ftakimlar, FILE *fskorlar, FILE *ffutbolcular) //istenilen bir haftaya iliskin skor girisini yapar ve skorlar.txt deki skorlari günceller
+{
+    struct futbolcu bir_futbolcu;
+    int ev_sahibi_takimin_attigi_gol,attigi_gol_say, hafta_no, ev_sahibi_takimin_kodu, futbolcu_numarasi, misafir_takimin_kodu, misafir_takimin_attigi_gol;
+    printf("Hafta numarasini giriniz:");
+    scanf("%d", &hafta_no);
+    while(hafta_no>0)
+    {
+        printf("Ev sahibi takimin kodunu ve attigi gol sayisini giriniz:");
+        scanf("%d %d", &ev_sahibi_takimin_kodu, &ev_sahibi_takimin_attigi_gol);
+        while(koddan_takim_kontrolu(ev_sahibi_takimin_kodu, ftakimlar)!=ev_sahibi_takimin_kodu)  //hatali takim girisi kodunu tespit eder
+        {
+            printf("\n%d kodlu takim bulunamamistir, lutfen tekrar deneyiniz:", ev_sahibi_takimin_kodu);
+            scanf("%d %d", &ev_sahibi_takimin_kodu, &ev_sahibi_takimin_attigi_gol);
+        }
+        printf("Misafir takimin kodunu ve attigi gol sayisini giriniz:");
+        scanf("%d %d", &misafir_takimin_kodu, &misafir_takimin_attigi_gol);
+        while(koddan_takim_kontrolu(misafir_takimin_kodu, ftakimlar)!=misafir_takimin_kodu)  //hatali takim girisi kodunu tespit eder
+        {
+            printf("%d kodlu takim bulunamamistir, lutfen tekrar deneyiniz:", misafir_takimin_kodu);
+            scanf("%d %d", &misafir_takimin_kodu, &misafir_takimin_attigi_gol);
+        }
+
+        printf("Ev sahibi takimdan gol atan futbolcu numarasini ve attigi gol sayisi:(girisi bitirmek icin -1 -1 gir)");
+        scanf("%d %d", &futbolcu_numarasi, &attigi_gol_say);
+
+        while(futbolcu_numarasi!=-1 && (futbolcu_numarasi!=koddan_futbolcu_kontrol(ev_sahibi_takimin_kodu, futbolcu_numarasi, ffutbolcular)))
+        {
+            printf("%d numarali futbolcu bulunmamaktadir, lutfen tekrar deneyiniz!\n", futbolcu_numarasi);
+            printf("Ev sahibi takimdan gol atan futbolcu numarasini ve attigi gol sayisi:(girisi bitirmek icin -1 -1 gir)");
+            scanf("%d %d", &futbolcu_numarasi, &attigi_gol_say);
+        }
+
+        skorlartxt_kayit(hafta_no, ev_sahibi_takimin_kodu, misafir_takimin_kodu, ev_sahibi_takimin_attigi_gol, misafir_takimin_attigi_gol,fskorlar);
+        while(futbolcu_numarasi>0 && futbolcu_numarasi<100)
+        {
+            fseek(ffutbolcular, (ev_sahibi_takimin_kodu*100+futbolcu_numarasi-1)*sizeof(struct futbolcu), SEEK_SET);
+            fread(&bir_futbolcu, sizeof(struct futbolcu), 1, ffutbolcular);
+            bir_futbolcu.attigi_gol+=attigi_gol_say;
+            fseek(ffutbolcular, (ev_sahibi_takimin_kodu*100+futbolcu_numarasi-1)*sizeof(struct futbolcu), SEEK_SET);
+            fwrite(&bir_futbolcu, sizeof(struct futbolcu), 1, ffutbolcular);
+            printf("Ev sahibi takimdan gol atan futbolcu numarasini ve attigi gol sayisi:(girisi bitirmek icin -1 -1 gir)");
+            scanf("%d %d", &futbolcu_numarasi, &attigi_gol_say);
+            while(futbolcu_numarasi!=-1 && koddan_futbolcu_kontrol(ev_sahibi_takimin_kodu, futbolcu_numarasi, ffutbolcular)!=futbolcu_numarasi)
+            {
+                printf("\n%d numarali futbolcu bulunmamaktadir, lutfen tekrar deneyiniz!\n", futbolcu_numarasi);
+                printf("Ev sahibi takimdan gol atan futbolcu numarasini ve attigi gol sayisi:(girisi bitirmek icin -1 -1 gir)");
+                scanf("%d %d", &futbolcu_numarasi, &attigi_gol_say);
+            }
+        }
+
+        printf("Misafir takimdan gol atan futbolcu numarasini ve attigi gol sayisi:(girisi bitirmek icin -1 -1 gir)");
+        scanf("%d %d", &futbolcu_numarasi, &attigi_gol_say);
+        while(futbolcu_numarasi!=-1 && koddan_futbolcu_kontrol(misafir_takimin_kodu, futbolcu_numarasi, ffutbolcular)!=futbolcu_numarasi)
+        {
+            printf("%d numarali futbolcu bulunmamaktadir, lutfen tekrar deneyiniz!\n", futbolcu_numarasi);
+            printf("Misafir takimdan gol atan futbolcu numarasini ve attigi gol sayisi:(girisi bitirmek icin -1 -1 gir)");
+            scanf("%d %d", &futbolcu_numarasi, &attigi_gol_say);
+        }
+
+        while(futbolcu_numarasi>0 && futbolcu_numarasi<100)
+        {
+            fseek(ffutbolcular, (misafir_takimin_kodu*100+futbolcu_numarasi-1)*sizeof(struct futbolcu), SEEK_SET);
+            fread(&bir_futbolcu, sizeof(struct futbolcu), 1, ffutbolcular);
+            bir_futbolcu.attigi_gol+=attigi_gol_say;
+            fseek(ffutbolcular, (misafir_takimin_kodu*100+futbolcu_numarasi-1)*sizeof(struct futbolcu), SEEK_SET);
+            fwrite(&bir_futbolcu, sizeof(struct futbolcu), 1, ffutbolcular);
+            printf("Misafir takimdan gol atan futbolcu numarasini ve attigi gol sayisi:(girisi bitirmek icin -1 -1 gir)");
+            scanf("%d %d", &futbolcu_numarasi, &attigi_gol_say);
+            while(futbolcu_numarasi!=-1 && koddan_futbolcu_kontrol(misafir_takimin_kodu, futbolcu_numarasi, ffutbolcular)!=futbolcu_numarasi)
+            {
+                printf("%d numarali futbolcu bulunmamaktadir, lutfen tekrar deneyiniz!\n", futbolcu_numarasi);
+                printf("Misafir takimdan gol atan futbolcu numarasini ve attigi gol sayisi:(girisi bitirmek icin -1 -1 gir)");
+                scanf("%d %d", &futbolcu_numarasi, &attigi_gol_say);
+            }
+        }
+        printf("Hafta numarasini giriniz:");
+        scanf("%d", &hafta_no);
+    }
+    skorlartxt_guncelle(fskorlar, ftakimlar);
+}
+
+void durum_futbolcu_goruntule(FILE *ftakimlar, FILE *ffutbolcular)  //ismi girilen takimin durumunu ve futbolcularini yazdirir
+{
+    char isim[MAX_ISIM];
+    int i;
+    struct futbolcu bir_futbolcu;
+    printf("Bilgilerini ogrenmek istediginiz takimin adini giriniz(buyuk harfle):");
+    scanf("%s", isim);
+    printf("\nTakim Adi            OO GG BB MM AA YY AVR Puan\n");
+    printf("-------------------- -- -- -- -- -- -- --- ----");
+    printf("\n");
+    if(isimden_koda(isim, ftakimlar)!=-1)
+    {
+        takim_bilgilerini_yazdir(isimden_koda(isim, ftakimlar), ftakimlar);
+        printf("\n");
+        printf("Futbolcu Bilgileri:\n");
+        printf("Forma No Ad Soyad             AA\n");
+        printf("-------- -------------------- --\n");
+        fseek(ffutbolcular, (isimden_koda(isim, ftakimlar)*100-1)*sizeof(struct futbolcu), SEEK_SET);
+        for(i=isimden_koda(isim, ftakimlar); i<isimden_koda(isim, ftakimlar)+100; i++)
+        {
+            fread(&bir_futbolcu, sizeof(struct futbolcu), 1, ffutbolcular);
+            if(bir_futbolcu.numara!=-1)
+                printf("%-8d %-21s %d\n", bir_futbolcu.numara, bir_futbolcu.adi, bir_futbolcu.attigi_gol);
+        }
+    }
+    else printf("\nTakim bulunamadi!");
+}
+
+void mac_listele (FILE *ftakimlar, FILE *fskorlar) //kodu girilen takimin yaptigi maclari listeler
+{
+    rewind(fskorlar);
+    int takim_kodu;
+    int hafta_no, ev_sahibi_takim_kodu, misafir_takim_kodu, ev_sahibi_takim_attigi_gol, misafir_takim_attigi_gol;
+    printf("Bilgilerini gormek istediginiz takimin kodunu giriniz:");
+    scanf("%d", &takim_kodu);
+    if(koddan_takim_kontrolu(takim_kodu, ftakimlar)==takim_kodu)
+    {
+        printf("\nTakim Adi            OO GG BB MM AA YY AVR Puan\n");
+        printf("-------------------- -- -- -- -- -- -- --- ----\n");
+        takim_bilgilerini_yazdir(takim_kodu, ftakimlar);
+        printf("\n");
+        printf("Oynadigi Maclarin Skorlari:\n");
+        printf("      Ev Sahibi                          Misafir\n");
+        printf("Hafta Takim Adi              AA  AA      Takim Adi\n");
+        printf("----- --------------------   --  --      --------------------\n");
+        fscanf(fskorlar,"%d %d %d %d %d", &hafta_no, &ev_sahibi_takim_kodu, &misafir_takim_kodu, &ev_sahibi_takim_attigi_gol, &misafir_takim_attigi_gol);
+        while(!feof(fskorlar))
+        {
+            if(ev_sahibi_takim_kodu==takim_kodu || misafir_takim_kodu==takim_kodu)
+                printf("%d     %-20s    %d   %d      %s\n", hafta_no, koddan_isime(ev_sahibi_takim_kodu, ftakimlar), ev_sahibi_takim_attigi_gol, misafir_takim_attigi_gol, koddan_isime(misafir_takim_kodu, ftakimlar));
+            fscanf(fskorlar,"%d %d %d %d %d", &hafta_no, &ev_sahibi_takim_kodu, &misafir_takim_kodu, &ev_sahibi_takim_attigi_gol, &misafir_takim_attigi_gol);
+        }
+    }
+    else
+        printf("\n%d kodlu takim bulunamadi!\n", takim_kodu);
+
+}
+
+void puan_cetveli(FILE *ftakimlar) //puan cetvelini yazdirir
+{
+    struct takim bir_takim;
+    struct puan_kod puanlar[100];
+    int i, j,takim_say=0;
+    rewind(ftakimlar);
+    for(i=0; i<100; i++)
+    {
+        puanlar[i].kod=-1;
+        puanlar[i].averaj=-1;
+        puanlar[i].puan=-1;
+        fread(&bir_takim, sizeof(struct takim), 1, ftakimlar);
+        if(bir_takim.kodu!=-1)
+        {
+            takim_say++;
+            puanlar[i].kod=bir_takim.kodu;
+            puanlar[i].averaj=averaj_hesapla(bir_takim);
+            puanlar[i].puan=puan_hesapla(bir_takim);
+        }
+    }
+    int max_index=0, max_puan=0;
+    for(i=0; i<takim_say-1; i++)
+    {
+        max_puan=0;
+        max_index=0;
+        for(j=i; j<100; j++)
+        {
+            if(puanlar[j].kod!=-1)
+            {
+                if(puanlar[j].puan>max_puan)
+                {
+                    max_puan=puanlar[j].puan;
+                    max_index=j;
+                }
+                if(puanlar[j].puan==max_puan)
+                {
+                    if(puanlar[j].averaj>puanlar[max_index].averaj)
+                    {
+                        max_puan=puanlar[j].puan;
+                        max_index=j;
+                    }
+                }
+            }
+        }
+        if(i!=max_index)
+            puan_swap(&puanlar[i], &puanlar[max_index]);
+    }
+    printf("\n\n\nTakim Adi            OO GG BB MM AA YY AVR Puan\n");
+    printf("-------------------- -- -- -- -- -- -- --- ----\n");
+    for(i=0;i<99;i++)
+    {
+        if(puanlar[i].kod!=-1)
+            takim_bilgilerini_yazdir(puanlar[i].kod, ftakimlar);
+    }
+}
+
+void en_cok_goller(FILE *ftakimlar) //en cok gol atan ve en cok gol yiyen takimi yazdirir
+{
+    struct takim bir_takim;
+    int en_cok_gol_yenen=0, en_cok_gol_atilan=0, en_cok_gol_yenen_index, en_cok_gol_atilan_index, i;
+    rewind(ftakimlar);
+    for(i=0; i<100; i++)
+    {
+        fread(&bir_takim, sizeof(struct takim), 1, ftakimlar);
+        if(bir_takim.attigi_gol>en_cok_gol_atilan)
+        {
+            en_cok_gol_atilan=bir_takim.attigi_gol;
+            en_cok_gol_atilan_index=i;
+        }
+        if (bir_takim.yedigi_gol>en_cok_gol_yenen)
+        {
+            en_cok_gol_yenen=bir_takim.yedigi_gol;
+            en_cok_gol_yenen_index=i;
+        }
+    }
+    printf("\n\nTakim Adi            AA YY\n");
+    printf("-------------------- -- --\n");
+    fseek (ftakimlar, en_cok_gol_atilan_index*sizeof(struct takim), SEEK_SET);
+    fread(&bir_takim, sizeof(struct takim), 1, ftakimlar);
+    printf("%-21s %-2d %-4d\n", bir_takim.adi, bir_takim.attigi_gol, bir_takim.yedigi_gol);
+    fseek (ftakimlar, en_cok_gol_yenen_index*sizeof(struct takim),SEEK_SET);
+    fread(&bir_takim, sizeof(struct takim), 1, ftakimlar);
+    printf("%-21s %-2d %-4d", bir_takim.adi, bir_takim.attigi_gol, bir_takim.yedigi_gol);
+}
+
+void deplasman(FILE *ftakimlar, FILE *fskorlar) //deplasmanda en cok gol atan takimi bulur
+{
+    rewind(fskorlar);
+    struct takim bir_takim;
+    int deplasman_goller[100]={0},i,max_gol=0,max_gol_index=0, hata=0;
+    int hafta_no, ev_sahibi_takim_kodu, misafir_takim_kodu, ev_sahibi_takim_attigi_gol, misafir_takim_attigi_gol;
+    fscanf(fskorlar,"%d %d %d %d %d", &hafta_no, &ev_sahibi_takim_kodu, &misafir_takim_kodu, &ev_sahibi_takim_attigi_gol, &misafir_takim_attigi_gol);
+    if(!(koddan_takim_kontrolu(ev_sahibi_takim_kodu, ftakimlar)==ev_sahibi_takim_kodu && koddan_takim_kontrolu(misafir_takim_kodu, ftakimlar)==misafir_takim_kodu))
+        printf("\n'skorlar.txt'deki %d %d kodlu takimlardan biri bulunamadi, hatayi duzeltip tekrar deneyin!\n", ev_sahibi_takim_kodu, misafir_takim_kodu);
+    else
+    {
+        while(!feof(fskorlar))
+        {
+            deplasman_goller[misafir_takim_kodu]+=misafir_takim_attigi_gol;
+            fscanf(fskorlar,"%d %d %d %d %d", &hafta_no, &ev_sahibi_takim_kodu, &misafir_takim_kodu, &ev_sahibi_takim_attigi_gol, &misafir_takim_attigi_gol);
+            if(!(koddan_takim_kontrolu(ev_sahibi_takim_kodu, ftakimlar)==ev_sahibi_takim_kodu && koddan_takim_kontrolu(misafir_takim_kodu, ftakimlar)==misafir_takim_kodu))
+            {
+                printf("\n'skorlar.txt'deki %d %d kodlu takimlardan biri bulunamadi, hatayi duzeltip tekrar deneyin!\n", ev_sahibi_takim_kodu, misafir_takim_kodu);
+                hata=1;
+            }
+        }
+        if(hata==0)
+        {
+            for(i=0; i<100; i++)
+            {
+                if(deplasman_goller[i]>max_gol)
+                {
+                    max_gol=deplasman_goller[i];
+                    max_gol_index=i;
+                }
+            }
+            fseek(ftakimlar, (max_gol_index-1)*sizeof(struct takim), SEEK_SET);
+            fread(&bir_takim, sizeof(struct takim), 1, ftakimlar);
+            printf("\n\nTakim Adi            Deplasmanda AA\n");
+            printf("-------------------- --------------\n");
+            printf("%-27s %d\n", bir_takim.adi, max_gol);
+        }
+    }
+}
+
+void haftanin_skorlari(FILE *ftakimlar, FILE *fskorlar) //takim bulunmadiginda gol ort a bak
+{
+    rewind(fskorlar);
+    int toplam_gol=0,istenen_hafta, mac_say=0, hafta_yok=1;
+    int hafta_no, ev_sahibi_takim_kodu, misafir_takim_kodu, ev_sahibi_takim_attigi_gol, misafir_takim_attigi_gol;
+    printf("Skorlarini gormek istediginiz haftayi girimiz:");
+    scanf("%d", &istenen_hafta);
+    printf("\n%d. Hafta Mac Skorlari:\n",istenen_hafta);
+    printf("       Ev Sahibi                 Misafir\n");
+    printf("Takim Adi            AA  AA Takim Adi\n");
+    printf("-------------------- --  -- --------------------\n");
+    fscanf(fskorlar,"%d %d %d %d %d", &hafta_no, &ev_sahibi_takim_kodu, &misafir_takim_kodu, &ev_sahibi_takim_attigi_gol, &misafir_takim_attigi_gol);
+    if(!(koddan_takim_kontrolu(ev_sahibi_takim_kodu, ftakimlar)==ev_sahibi_takim_kodu && koddan_takim_kontrolu(misafir_takim_kodu, ftakimlar)==misafir_takim_kodu))
+        printf("\n%d %d kodlu takimlardan biri bulunamadi!\n", ev_sahibi_takim_kodu, misafir_takim_kodu);
+        while(!feof(fskorlar))
+        {
+            if(hafta_no==istenen_hafta && (koddan_takim_kontrolu(ev_sahibi_takim_kodu, ftakimlar)==ev_sahibi_takim_kodu && koddan_takim_kontrolu(misafir_takim_kodu, ftakimlar)==misafir_takim_kodu))
+            {
+                mac_say++;
+                hafta_yok=0;
+                toplam_gol=toplam_gol+ev_sahibi_takim_attigi_gol+misafir_takim_attigi_gol;
+                printf("%-20s     %d  %d             %s\n", koddan_isime(ev_sahibi_takim_kodu, ftakimlar), ev_sahibi_takim_attigi_gol, misafir_takim_attigi_gol, koddan_isime(misafir_takim_kodu, ftakimlar));
+            }
+
+            fscanf(fskorlar,"%d %d %d %d %d", &hafta_no, &ev_sahibi_takim_kodu, &misafir_takim_kodu, &ev_sahibi_takim_attigi_gol, &misafir_takim_attigi_gol);
+            if(!(koddan_takim_kontrolu(ev_sahibi_takim_kodu, ftakimlar)==ev_sahibi_takim_kodu && koddan_takim_kontrolu(misafir_takim_kodu, ftakimlar)==misafir_takim_kodu))
+                printf("\n%d %d kodlu takimlardan biri bulunamadi!\n", ev_sahibi_takim_kodu, misafir_takim_kodu);
+        }
+    if(toplam_gol!=0)
+        printf("\nHaftanin gol ort:%.2f", (float)toplam_gol/mac_say);
+    if(toplam_gol==0 && hafta_yok==0)
+        printf("\nHaftanin gol ort:0\n");
+    if(hafta_yok==1)
+            printf("\n%d. haftaya iliskin hicbir skor girdisi bulunamamistir!\n", istenen_hafta);
+}
+
+void en_cok_gol_futbolcu(FILE *ftakimlar, FILE *ffutbolcular) //deplasmanda ki max gol sayisini ve takimini bulur
+{
+    int i;
+    struct futbolcu bir_futbolcu;
+    struct takim bir_takim;
+    char adi[MAX_ISIM];
+    int aa;
+    int max_gol_sayisi=0, max_gol_index=0, max_golcu_takim;
+    rewind(ffutbolcular);
+    for(i=100;i<9999;i++)
+    {
+        fread(&bir_futbolcu, sizeof(struct futbolcu), 1, ffutbolcular);
+        if(bir_futbolcu.numara!=-1 && bir_futbolcu.attigi_gol>max_gol_sayisi)
+        {
+            max_gol_index=i;
+            max_gol_sayisi=bir_futbolcu.attigi_gol;
+            strcpy(adi, bir_futbolcu.adi);
+            aa=bir_futbolcu.attigi_gol;
+        }
+    }
+    max_golcu_takim=max_gol_index/100;
+    printf("\nTakim Adi            Forma No Ad Soyad             AA\n");
+    printf("-------------------- -------- -------------------- --\n");
+    fseek(ftakimlar, (max_golcu_takim-2)*sizeof(struct takim), SEEK_SET);
+    fread(&bir_takim, sizeof(struct takim), 1, ftakimlar);
+    printf("%-23s %d  %9s %15d", bir_takim.adi, max_gol_index-max_golcu_takim*100+1, adi, aa);
+}
+
+void lig_disi_transfer(FILE *ffutbolcular) //lig disindan lig icine transfer yapar
+{
+	struct futbolcu bir_futbolcu={0,"",0};
+	int takim_kodu;
+	printf("Futbolcunun takim kodu, forma numarasi ve ad soyad bilgilerini giriniz");
+	scanf("%d %d %s", &takim_kodu, &bir_futbolcu.numara, bir_futbolcu.adi);
+	fseek(ffutbolcular, (takim_kodu*100+bir_futbolcu.numara-1)*sizeof(struct futbolcu), SEEK_SET);
+	fwrite(&bir_futbolcu, sizeof(struct futbolcu), 1, ffutbolcular);
+}
+
+void lig_ici_transfer (FILE *ffutbolcular) //lig ici transfer yapar
+{
+    struct futbolcu bir_futbolcu;
+    int eski_takim_kodu, eski_forma_no, yeni_takim_kodu, yeni_forma_no;
+    printf("Fulbolcunun su an oynadigi takim kodu ve forma numarasi ile transfer edilecegi takim kodu ve forma numarasini giriniz:");
+    scanf("%d %d %d %d", &eski_takim_kodu, &eski_forma_no, &yeni_takim_kodu, &yeni_forma_no);
+    while(eski_forma_no!=koddan_futbolcu_kontrol(eski_takim_kodu, eski_forma_no, ffutbolcular))
+    {
+        printf("%d numarali futbolcu bulunamamistir, lutfen tekrar deneyiniz!\n", eski_forma_no);
+        printf("Fulbolcunun su an oynadigi takim kodu ve forma numarasi ile transfer edilecegi takim kodu ve forma numarasini giriniz:");
+        scanf("%d %d %d %d", &eski_takim_kodu, &eski_forma_no, &yeni_takim_kodu, &yeni_forma_no);
+    }
+    fseek(ffutbolcular, (eski_takim_kodu*100+eski_forma_no-1)*sizeof(struct futbolcu), SEEK_SET);
+    fread(&bir_futbolcu, sizeof(struct futbolcu), 1, ffutbolcular);
+    bir_futbolcu.numara=-1;
+    fseek(ffutbolcular, (eski_takim_kodu*100+eski_forma_no-1)*sizeof(struct futbolcu), SEEK_SET);
+    fwrite(&bir_futbolcu, sizeof(struct futbolcu), 1, ffutbolcular);
+    fseek(ffutbolcular, (eski_takim_kodu*100+eski_forma_no-1)*sizeof(struct futbolcu), SEEK_SET);
+    bir_futbolcu.numara=yeni_forma_no;
+    fseek(ffutbolcular, (yeni_takim_kodu*100+yeni_forma_no-1)*sizeof(struct futbolcu), SEEK_SET);
+    fwrite(&bir_futbolcu, sizeof(struct futbolcu), 1, ffutbolcular);
+}
+
+void oyuncu_sil(FILE *ffutbolcular) //lig disi transfer yapar yani oyuncu siler
+{
+    struct futbolcu bir_futbolcu={0,"",0};
+    int takim_kodu, forma_no;
+    printf("Takim  kodu  ve  forma  numarasi  bilgilerini giriniz:");
+    scanf("%d %d", &takim_kodu, &forma_no);
+    while(forma_no!=koddan_futbolcu_kontrol(takim_kodu, forma_no, ffutbolcular))
+    {
+        printf("%d numarali futbolcu bulunamamistir, lutfen tekrar deneyiniz!\n", forma_no);
+        printf("Takim  kodu  ve  forma  numarasi  bilgilerini giriniz:");
+        scanf("%d %d", &takim_kodu, &forma_no);
+    }
+    bir_futbolcu.numara=-1;
+    fseek(ffutbolcular, (100*takim_kodu+forma_no-1)*sizeof(struct futbolcu), SEEK_SET);
+    fwrite(&bir_futbolcu, sizeof(struct futbolcu), 1, ffutbolcular);
+}
+
+int isimden_koda(char isim[MAX_ISIM], FILE *ftakimlar)  //ismi girilen takimin kodunu dondurur
+{
+    rewind(ftakimlar);
+    struct takim bir_takim;
+    int i, kod=-1;
+    for(i=0;i<100;i++)
+    {
+        fread(&bir_takim, sizeof(struct takim), 1, ftakimlar);
+        if(strcmp(bir_takim.adi, isim)==0)
+        {
+            kod=bir_takim.kodu;
+            break;
+        }
+    }
+    return kod;
+}
+
+void takim_bilgilerini_yazdir(int kod, FILE *ftakimlar) //kodu girilen takimin bilgilerini yazdirir
+{
+    struct takim bir_takim;
+    fseek(ftakimlar, (kod-1)*sizeof(struct takim), SEEK_SET);
+    fread(&bir_takim, sizeof(struct takim), 1, ftakimlar);
+    printf("%-20s%3d%3d%3d%3d%3d%3d%4d%4d\n", bir_takim.adi, bir_takim.beraberlik+bir_takim.maglubiyet+bir_takim.galibiyet,bir_takim.galibiyet, bir_takim.beraberlik, bir_takim.maglubiyet, bir_takim.attigi_gol, bir_takim.yedigi_gol, averaj_hesapla(bir_takim), puan_hesapla(bir_takim));
+}
+
+int puan_hesapla(struct takim bir_takim) //struct takim tipindeki degiskenin puanini dondurur
+{
+    return bir_takim.galibiyet*3+bir_takim.beraberlik;
+}
+
+int averaj_hesapla(struct takim bir_takim) //struct takim tipindeki degiskenin averajini dondurur
+{
+    return bir_takim.attigi_gol-bir_takim.yedigi_gol;
+}
+
+void puan_swap(struct puan_kod *puan1, struct puan_kod *puan2) //puanlari siralarken swap islemi yapar
+{
+    struct puan_kod puan_gecici;
+
+    puan_gecici.kod=puan1->kod;
+    puan_gecici.averaj=puan1->averaj;
+    puan_gecici.puan=puan1->puan;
+
+    puan1->kod=puan2->kod;
+    puan1->averaj=puan2->averaj;
+    puan1->puan=puan2->puan;
+
+    puan2->kod=puan_gecici.kod;
+    puan2->averaj=puan_gecici.averaj;
+    puan2->puan=puan_gecici.puan;
+}
+
+char *koddan_isime(int kod, FILE *ftakimlar) //kodu girilen takimin ismini char * tipinde geri dondurur
+{
+    static struct takim bir_takim;
+    fseek(ftakimlar, (kod-1)*sizeof(struct takim), SEEK_SET);
+    fread(&bir_takim, sizeof(struct takim), 1, ftakimlar);
+    return strdup(bir_takim.adi);
+}
+
+void maglubiyet_arttir(int takimin_kodu, FILE *ftakimlar)  //kodu girilen takimin maglubiyet sayisini bir arttirir
+{
+    struct takim bir_takim;
+    fseek(ftakimlar, (takimin_kodu-1)*sizeof(struct takim), SEEK_SET);
+    fread(&bir_takim, sizeof(struct takim), 1, ftakimlar);
+    bir_takim.maglubiyet++;
+    fseek(ftakimlar, (takimin_kodu-1)*sizeof(struct takim), SEEK_SET);
+    fwrite(&bir_takim, sizeof(struct takim), 1, ftakimlar);
+}
+
+void galibiyet_arttir(int takimin_kodu, FILE *ftakimlar)  //kodu girilen takimin galibiyet sayisini bir arttirir
+{
+    struct takim bir_takim;
+    fseek(ftakimlar, (takimin_kodu-1)*sizeof(struct takim), SEEK_SET);
+    fread(&bir_takim, sizeof(struct takim), 1, ftakimlar);
+    bir_takim.galibiyet++;
+    fseek(ftakimlar, (takimin_kodu-1)*sizeof(struct takim), SEEK_SET);
+    fwrite(&bir_takim, sizeof(struct takim), 1, ftakimlar);
+}
+
+void beraberlik_arttir(int takimin_kodu, FILE *ftakimlar) //kodu girilen takimin beraberlik sayisini bir arttirir
+{
+    struct takim bir_takim;
+    fseek(ftakimlar, (takimin_kodu-1)*sizeof(struct takim), SEEK_SET);
+    fread(&bir_takim, sizeof(struct takim), 1, ftakimlar);
+    bir_takim.beraberlik++;
+    fseek(ftakimlar, (takimin_kodu-1)*sizeof(struct takim), SEEK_SET);
+    fwrite(&bir_takim, sizeof(struct takim), 1, ftakimlar);
+}
+
+void skorlartxt_kayit(int hafta_no, int ev_sahibi_takimin_kodu, int misafir_takimin_kodu, int ev_sahibi_takimin_attigi_gol, int misafir_takimin_attigi_gol, FILE *fskorlar)
+{
+    fprintf(fskorlar, "%d %d %d %d %d\n", hafta_no, ev_sahibi_takimin_kodu, misafir_takimin_kodu, ev_sahibi_takimin_attigi_gol, misafir_takimin_attigi_gol);
+}
+
+void skorlartxt_guncelle(FILE *fskorlar, FILE *ftakimlar) //skorlar.txt de ki skorlari takimlar.dat a isler
+{
+    int hafta_no, ev_sahibi_takim_kodu, misafir_takim_kodu, ev_sahibi_takim_attigi_gol, misafir_takim_attigi_gol;
+    rewind(fskorlar);
+    fscanf(fskorlar,"%d %d %d %d %d", &hafta_no, &ev_sahibi_takim_kodu, &misafir_takim_kodu, &ev_sahibi_takim_attigi_gol, &misafir_takim_attigi_gol);
+    while(!feof(fskorlar)) //dosya sonuna kadar okuma yapar
+    {
+        if(ev_sahibi_takim_attigi_gol>misafir_takim_attigi_gol)
+        {
+            galibiyet_arttir(ev_sahibi_takim_kodu, ftakimlar);
+            maglubiyet_arttir(misafir_takim_kodu, ftakimlar);
+        }
+        else
+            if(ev_sahibi_takim_attigi_gol<misafir_takim_attigi_gol)
+            {
+                galibiyet_arttir(misafir_takim_kodu, ftakimlar);
+                maglubiyet_arttir(ev_sahibi_takim_kodu, ftakimlar);
+            }
+                else
+                {
+                    beraberlik_arttir(ev_sahibi_takim_kodu, ftakimlar);
+                    beraberlik_arttir(misafir_takim_kodu, ftakimlar);
+                }
+        fscanf(fskorlar,"%d %d %d %d %d", &hafta_no, &ev_sahibi_takim_kodu, &misafir_takim_kodu, &ev_sahibi_takim_attigi_gol, &misafir_takim_attigi_gol); //dosyadan bir satir okur
+    }
+}
+
+int koddan_takim_kontrolu(int kod, FILE *ftakimlar)//girilen takim kodunun listede olup olmadigini kontrol eder kod listede varsa kendini dondurur yoksa -1 dondurur
+{
+    static struct takim bir_takim;
+    fseek(ftakimlar, (kod-1)*sizeof(struct takim), SEEK_SET);
+    fread(&bir_takim, sizeof(struct takim), 1, ftakimlar);
+    if(bir_takim.kodu==-1)
+        return -1;
+    if(bir_takim.kodu==kod)
+        return kod;
+    return 0;
+}
+
+int koddan_futbolcu_kontrol(int takim_kodu, int futbolcu_kodu, FILE *ffutbolcular) //kodu girilen futbolcu varsa numarasini yoksa -1 dondurur
+{
+    struct futbolcu bir_futbolcu;
+    fseek(ffutbolcular, (takim_kodu*100+futbolcu_kodu-1)*sizeof(struct futbolcu), SEEK_SET);
+    fread(&bir_futbolcu, sizeof(struct futbolcu), 1, ffutbolcular);
+    if(bir_futbolcu.numara==futbolcu_kodu)
+        return futbolcu_kodu;
+    else
+        return -1;
+}
