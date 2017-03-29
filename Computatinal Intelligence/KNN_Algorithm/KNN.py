@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score
+from sklearn.metrics import confusion_matrix
 from sklearn.neighbors import KNeighborsClassifier
 
 # read training data from excel file
@@ -36,5 +37,8 @@ print test_result
 print  "\nPredicted Results"
 print neigh.predict(test_data)
 
+# print the results
 acc = accuracy_score(neigh.predict(test_data), test_result)
-print "\nSistemin basari yuzdesi : %",acc*100
+print "\nSystem success rate : %",acc*100
+# print the confusion matrix
+print "\nConfusion matrix :\n",confusion_matrix(test_result, neigh.predict(test_data), [0, 1])
