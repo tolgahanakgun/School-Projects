@@ -1,0 +1,16 @@
+﻿		Adi~Kategorisi~Markasi~Modeli~Miktari~Maliyet~Satis_Fiyati~Aciklama~
+Lenovo Z500~Tasinabilir Bilgisayar~Lenovo~Z500~200~400~1400~i5,intel,nvidia,laptop
+Lenovo Z5070~Tasinabilir Bilgisayar~Lenovo~Z5070~425~475~1900~i5,intel,nvidia,laptop
+Lenovo Z5070~Tasinabilir Bilgisayar~IBMLenovo~Z5070~1~800~3600~i7,intel,nvidia,laptop
+Toshiba S50~Tasinabilir Bilgisayar~Toshiba~S50~510~500~2600~i7,intel,nvidia,laptop
+Asus X550CA~Tasinabilir Bilgisayar~Asus~X550CA~320~120~900~celeron,intel,freedos,laptop
+Samsung ATIV Book~Tasinabilir Bilgisayar~Samsung~NP915S3G~400~325~1800~quad core,intel,amd,ultrabook
+Samsung NP270E5J~Tasinabilir Bilgisayar~Samsung~NP270E5J~100~80~750~celeron,intel,amd,ultrabook
+LG GN-B559PQCZ~Buzdolabi~LG~GN-B559PQCZ~560~780~2200~no-frost,cift kapi,a++,lcd
+Sharp SJ-T59R-S~Buzdolabi~Sharp~SJ-T59R~120~640~1700~cift kapi,a
+Bosch KDN56VI30~Buzdolabi~Bosch~KDN56VI30~360~700~2200~no-frost,cift kapi,a++
+LG GN-M702HLHM~Buzdolabi~LG~GN-M702HLHM~540~950~2500~no-frost,cift kapi,a++
+Samsung STSHX~Tasinabilir Disk~Samsung~STSHX~280~40~160~usb,5400rpm
+Toshiba HDTP120EK3CA~Tasinabilir Disk~Toshiba~HDTP120EK3CA~40~65~280~usb,5400rpm
+Logitech K400~Klavye~Logitech~K400~168~30~90~usb,q-klavye,wireless
+Olympus OMD E-M10~Fotograf Makinesi~Olympus~E-M10~35~840~2000~1080P,wireless
