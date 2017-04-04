@@ -10,7 +10,6 @@ from board import board
         
 class queens:
     def __init__(self, numruns, verbocity, passedboard=None):
-        #TODO check options
         self.restart=0
         self.totalruns = numruns
         self.totalsucc = 0
@@ -48,28 +47,14 @@ class queens:
         if currViolations==0:
             self.totalsucc += 1
             print "##########################"
-        '''
-        if self.cost != 0:
-            if self.verbocity == True:
-                print "NO SOLUTION FOUND"
-        else:
-            if self.verbocity == True:
-                print "SOLUTION FOUND"
-            self.totalsucc += 1
-        '''
         return self.cost
     
     def calc_cost(self, tboard):
-        #these are separate for easier debugging
         cost = 0
         for i in range(0,8):
-            #subtract 2 so don't count self
-            #sideways and vertical
             for j in range(i+1,8):
-                #if tboard.board[i] == j:
                 if tboard.board[i] == tboard.board[j]:
                     cost += 1
-                #calculate diagonal violations
                 offset = j - i
                 if tboard.board[i] == tboard.board[j] - offset or tboard.board[i] == tboard.board[j] + offset:
                     cost +=1
@@ -96,8 +81,6 @@ class queens:
     def printstats(self):
         print "Total Solution Count: ", self.totalruns
         print "Total Restart Count: ", self.restart
-        #print "Success Percentage: ", float(self.totalsucc)/float(self.totalruns)
-        #print "Average number of steps: ", float(self.totalnumsteps)/float(self.totalruns)
     
 if __name__ == "__main__":
     parser = OptionParser()
@@ -112,8 +95,3 @@ if __name__ == "__main__":
 
     mboard = queens(verbocity=options.verbose, numruns=options.numrun)
     mboard.printstats()
-    
-    
-    
-    
-    
