@@ -27,7 +27,7 @@ test_result=np.array(test_result_column.as_matrix())
 test_result=test_result.ravel()
 
 # instantiate KNeighborsClassifier
-neigh = KNeighborsClassifier(n_neighbors=3)
+neigh = KNeighborsClassifier(n_neighbors=5, weights = 'distance', metric='canberra')
 # train the system
 neigh.fit(data, result)
 
