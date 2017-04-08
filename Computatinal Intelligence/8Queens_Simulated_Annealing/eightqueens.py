@@ -198,7 +198,9 @@ if __name__ == "__main__":
     end=timer()
     print'Sonuclar:'
     print'Hill Climbing:'
-    
+    average_step=0
+    avarage_restart=0
+    avarage_time=0
     print "Tablo:"
     print "Toplam hareket sayisi || ""Toplam restart sayisi || ""Bitis Suresi(saniye)"
     for i in range(35):
