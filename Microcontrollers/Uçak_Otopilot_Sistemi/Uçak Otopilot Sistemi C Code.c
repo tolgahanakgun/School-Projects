@@ -18,55 +18,55 @@ void main()
 
 void isr_ex0(void) interrupt 0
 {
-       if(P1==0xFE) //Asagi butonu aktif
-			 {				 
-				  STEP_ASAGI_YUKARI=0x08;
-				  delay();
-					STEP_ASAGI_YUKARI=0x04;
-				  delay();
-					STEP_ASAGI_YUKARI=0x02;
-				  delay();
-					STEP_ASAGI_YUKARI=0x01;
-				  delay();
-					STEP_ASAGI_YUKARI=0x00;
-			 }
-			 if(P1==0xFD)  //Yukari butonu aktif
-			 {
-				  STEP_ASAGI_YUKARI=0x01;
-				  delay();
-					STEP_ASAGI_YUKARI=0x02;
-				  delay();
-					STEP_ASAGI_YUKARI=0x04;
-				  delay();
-					STEP_ASAGI_YUKARI=0x08;
-				  delay();
-					STEP_ASAGI_YUKARI=0x00;
-			 }
-			 if(P1==0xFB)  //Saga butonu aktif
-			 {
-				  STEP_SAG_SOL=0x08;
-				  delay();
-					STEP_SAG_SOL=0x04;
-				  delay();
-					STEP_SAG_SOL=0x02;
-				  delay();
-					STEP_SAG_SOL=0x01;
-				  delay();
-					STEP_SAG_SOL=0x00;
-			 }
-			 if(P1==0xF7)  //Sola butonu aktif
-			 {
-				  STEP_SAG_SOL=0x01;
-				  delay();
-					STEP_SAG_SOL=0x02;
-				  delay();
-					STEP_SAG_SOL=0x04;
-				  delay();
-					STEP_SAG_SOL=0x08;
-				  delay();
-					STEP_SAG_SOL=0x00;
-			 }
-			 P1=0xFF;
+    if(P1==0xFE) //Asagi butonu aktif
+    {
+        STEP_ASAGI_YUKARI=0x08;
+        delay();
+        STEP_ASAGI_YUKARI=0x04;
+        delay();
+        STEP_ASAGI_YUKARI=0x02;
+        delay();
+        STEP_ASAGI_YUKARI=0x01;
+        delay();
+        STEP_ASAGI_YUKARI=0x00;
+    }
+    if(P1==0xFD)  //Yukari butonu aktif
+    {
+        STEP_ASAGI_YUKARI=0x01;
+        delay();
+        STEP_ASAGI_YUKARI=0x02;
+        delay();
+        STEP_ASAGI_YUKARI=0x04;
+        delay();
+        STEP_ASAGI_YUKARI=0x08;
+        delay();
+        STEP_ASAGI_YUKARI=0x00;
+    }
+    if(P1==0xFB)  //Saga butonu aktif
+    {
+        STEP_SAG_SOL=0x08;
+        delay();
+        STEP_SAG_SOL=0x04;
+        delay();
+        STEP_SAG_SOL=0x02;
+        delay();
+        STEP_SAG_SOL=0x01;
+        delay();
+        STEP_SAG_SOL=0x00;
+    }
+    if(P1==0xF7)  //Sola butonu aktif
+    {
+        STEP_SAG_SOL=0x01;
+        delay();
+        STEP_SAG_SOL=0x02;
+        delay();
+        STEP_SAG_SOL=0x04;
+        delay();
+        STEP_SAG_SOL=0x08;
+        delay();
+        STEP_SAG_SOL=0x00;
+    }
+    P1=0xFF;
 }
 
 void delay(void)
